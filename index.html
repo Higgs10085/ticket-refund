@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>體育館回數票退費計算器</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 30px auto; }
+    label, select, input { display: block; margin-top: 15px; }
+    button { margin-top: 20px; padding: 8px 16px; }
+    #result { margin-top: 30px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>回數票退費計算器</h1>
+
+  <label for="ticketType">票券種類：</label>
+  <select id="ticketType">
+    <option value="swim">溫水游泳池</option>
+    <option value="gym">健身中心</option>
+  </select>
+
+  <label for="identity">身分別：</label>
+  <select id="identity">
+    <option value="A">學生</option>
+    <option value="B">教職員</option>
+    <option value="C">眷屬／退休人員／校友</option>
+    <option value="D">校外人士</option>
+  </select>
+
+  <label for="usedTickets">使用票數（最多30張，贈送票不計入退費）：</label>
+  <input type="number" id="usedTickets" min="0" value="0">
+
+  <label for="expired">票券是否已過期：</label>
+  <select id="expired">
+    <option value="no">未過期</option>
+    <option value="yes">已過期</option>
+  </select>
+
+  <button onclick="calculateRefund()">計算退費金額</button>
+
+  <div id="result"></div>
+
+  <script>
+    const prices = {
+      swim: { A: 900, B: 1500, C: 2500, D: 4500 },
+      gym:  { A: 750, B: 1200, C: 1800, D: 4500 },
+    };
+
+    const unitPrices = {
+      swim: { A: 50, B: 70, C: 90, D: 150 },
+      gym:  { A: 50, B: 70, C: 90, D: 150 },
+    };
+
+    const PAID_TICKETS = 30;
+    const BONUS_TICKETS = 5;
+    const TOTAL_TICKETS = PAID_TICKETS + BONUS_TICKETS;
+
+    function calculateRefund() {
+      const ticketType = document.getElementById("ticketType").value;
+      const identity = document.getElementById("identity").value;
+      const usedTickets = parseInt(document.getElementById("usedTickets").value);
+      const isExpired = document.getElementById("expired").value === "yes";
+
+      const fullPrice = prices[ticketType][identity];
+      const unitPrice = unitPrices[ticketType][identity];
+
+      // 檢查是否輸入超過最大可用票數（含贈送票）
+      if (usedTickets > PAID_TICKETS) {
+        document.getElementById("result").innerText = "⚠️ ⚠️ 使用票數不得超過 30 張（不含贈送票）";
+        return;
+      }
+      const paidUsedTickets = Math.min(usedTickets, PAID_TICKETS); // 只計算有價部分
+      const usedValue = paidUsedTickets * unitPrice;
+
+      let refund = fullPrice - usedValue;
+      if (isExpired) {
+        refund *= 0.97; // 扣除3%手續費
+      }
+
+      refund = Math.max(0, refund);
+      document.getElementById("result").innerHTML = `
+        <p>🔸 原始票價：新台幣 ${fullPrice} 元</p>
+        <p>🔸 使用張數（付費上限 30 張）：${usedTickets} 張，其中計費：${paidUsedTickets} 張</p>
+        <p>🔸 扣除金額：${usedValue} 元</p>
+        ${isExpired ? `<p>🔸 手續費（3%）：${((fullPrice - usedValue) * 0.03).toFixed(2)} 元</p>` : ''}
+        <p><strong>✅ 應退金額：新台幣 ${refund.toFixed(2)} 元</strong></p>`;
+    }
+  </script>
+</body>
+</html>
